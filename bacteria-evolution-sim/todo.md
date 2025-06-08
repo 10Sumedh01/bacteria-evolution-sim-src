@@ -35,8 +35,8 @@
 - [x] Fix any bugs or issues
 
 ## Phase 6: Provide code files to user
-- [ ] Package all code files
-- [ ] Create documentation
-- [ ] Provide instructions for running locally
-- [ ] Deliver final files to user
+- [x] Package all code files
+- [x] Create documentation
+- [x] Provide instructions for running locally
+- [x] Deliver final files to user
 

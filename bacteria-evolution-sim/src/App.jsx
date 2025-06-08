@@ -17,12 +17,27 @@ function App() {
   const [showNutrients, setShowNutrients] = useState(true);
   const [showToxicity, setShowToxicity] = useState(true);
   
-  // Initialize simulation with default parameters
+  // State to force re-initialization of useSimulation hook on reset
+  const [simulationKey, setSimulationKey] = useState(0);
+
+  // Initialize simulation with default parameters, including canvas dimensions
   const simulation = useSimulation({
-    environmentParams: getEnvironmentPreset('neutral'),
+    environmentParams: {
+      ...getEnvironmentPreset('neutral'),
+      width: canvasSize.width,
+      height: canvasSize.height,
+    },
     initialBacteriaParams: getBacteriaPreset('balanced'),
     initialPopulation: 50
-  });
+  }, simulationKey);
+
+  // Use a ref to store the simulation object to avoid it being in useEffect dependencies
+  const simulationRef = useRef(simulation);
+
+  // Update the ref whenever the simulation object changes
+  useEffect(() => {
+    simulationRef.current = simulation;
+  }, [simulation]);
   
   // Handle window resize
   useEffect(() => {
@@ -36,8 +51,10 @@ function App() {
         height: maxHeight
       });
       
-      // Update environment dimensions
-      simulation.updateEnvironment({
+      // Update environment dimensions using the ref
+      // This is now redundant as dimensions are passed during simulation initialization
+      // but kept for potential future dynamic resizing without full reset
+      simulationRef.current.updateEnvironment({
         width: maxWidth,
         height: maxHeight
       });
@@ -53,8 +70,13 @@ function App() {
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, []); // Empty dependency array to run only once
   
+  // Function to handle full simulation reset
+  const handleReset = () => {
+    setSimulationKey(prevKey => prevKey + 1);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
       <header className="mb-8">
@@ -116,7 +138,7 @@ function App() {
             setSpeed={simulation.setSpeed}
             onStart={simulation.start}
             onPause={simulation.pause}
-            onReset={simulation.reset}
+            onReset={handleReset}
             statistics={simulation.state?.statistics}
           />
         </div>
@@ -132,4 +154,5 @@ function App() {
 }
 
 export default App;
+
 

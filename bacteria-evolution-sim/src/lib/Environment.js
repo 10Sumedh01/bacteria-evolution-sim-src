@@ -25,8 +25,7 @@ class Environment {
     this.carryingCapacity = options.carryingCapacity || 200;
     
     // Internal state
-    this.nutrientDistribution = this.generateNutrientDistribution();
-    this.toxicityDistribution = this.generateToxicityDistribution();
+    this.initializeDistributions(); // Call a dedicated method for initialization
     this.generation = 0;
     
     // Statistics
@@ -42,11 +41,23 @@ class Environment {
       },
       extinctionEvents: []
     };
+    console.log("Environment initialized with width:", this.width, "height:", this.height);
   }
   
   /**
+   * Initialize or re-initialize nutrient and toxicity distributions
+   */
+  initializeDistributions() {
+    console.log("Initializing distributions for width:", this.width, "height:", this.height);
+    this.nutrientDistribution = this.generateNutrientDistribution();
+    this.toxicityDistribution = this.generateToxicityDistribution();
+    console.log("Nutrient grid initialized:", this.nutrientDistribution.grid.length, "x", this.nutrientDistribution.grid[0].length);
+    console.log("Toxicity grid initialized:", this.toxicityDistribution.grid.length, "x", this.toxicityDistribution.grid[0].length);
+  }
+
+  /**
    * Generate a random distribution of nutrients across the environment
-   * @returns {Array} - 2D grid of nutrient values
+   * @returns {Object} - Grid and cell dimensions
    */
   generateNutrientDistribution() {
     const gridSize = 20;
@@ -69,7 +80,7 @@ class Environment {
         }
       }
     }
-    
+    console.log("Generated nutrient grid:", grid.length, "x", grid[0].length);
     return {
       grid,
       cellWidth,
@@ -80,7 +91,7 @@ class Environment {
   
   /**
    * Generate a random distribution of toxicity across the environment
-   * @returns {Array} - 2D grid of toxicity values
+   * @returns {Object} - Grid and cell dimensions
    */
   generateToxicityDistribution() {
     const gridSize = 20;
@@ -101,7 +112,7 @@ class Environment {
         }
       }
     }
-    
+    console.log("Generated toxicity grid:", grid.length, "x", grid[0].length);
     return {
       grid,
       cellWidth,
@@ -198,12 +209,19 @@ class Environment {
    * @returns {number} - Nutrient level at position
    */
   getNutrientAt(x, y) {
+    console.log("getNutrientAt called for x:", x, "y:", y);
+    console.log("nutrientDistribution:", this.nutrientDistribution);
     const { grid, cellWidth, cellHeight, gridSize } = this.nutrientDistribution;
     
     // Convert position to grid coordinates
     const gridX = Math.min(Math.floor(x / cellWidth), gridSize - 1);
     const gridY = Math.min(Math.floor(y / cellHeight), gridSize - 1);
     
+    console.log("gridX:", gridX, "gridY:", gridY, "grid length:", grid.length);
+    if (!grid || !grid[gridX] || grid[gridX][gridY] === undefined) {
+      console.error("Error: Invalid grid access in getNutrientAt. grid:", grid, "gridX:", gridX, "gridY:", gridY);
+      return 0; // Return a default value to prevent crash
+    }
     return grid[gridX][gridY];
   }
   
@@ -214,12 +232,19 @@ class Environment {
    * @returns {number} - Toxicity level at position
    */
   getToxicityAt(x, y) {
+    console.log("getToxicityAt called for x:", x, "y:", y);
+    console.log("toxicityDistribution:", this.toxicityDistribution);
     const { grid, cellWidth, cellHeight, gridSize } = this.toxicityDistribution;
     
     // Convert position to grid coordinates
     const gridX = Math.min(Math.floor(x / cellWidth), gridSize - 1);
     const gridY = Math.min(Math.floor(y / cellHeight), gridSize - 1);
     
+    console.log("gridX:", gridX, "gridY:", gridY, "grid length:", grid.length);
+    if (!grid || !grid[gridX] || grid[gridX][gridY] === undefined) {
+      console.error("Error: Invalid grid access in getToxicityAt. grid:", grid, "gridX:", gridX, "gridY:", gridY);
+      return 0; // Return a default value to prevent crash
+    }
     return grid[gridX][gridY];
   }
   
@@ -294,20 +319,34 @@ class Environment {
    * @param {Object} params - New parameters
    */
   setParameters(params) {
+    let distributionsNeedRegen = false;
+
     if (params.temperature !== undefined) this.temperature = params.temperature;
     if (params.pH !== undefined) this.pH = params.pH;
     if (params.nutrients !== undefined) {
       this.nutrients = params.nutrients;
-      this.nutrientDistribution = this.generateNutrientDistribution();
+      distributionsNeedRegen = true; // Regenerate if nutrient level changes
     }
     if (params.toxicity !== undefined) {
       this.toxicity = params.toxicity;
-      this.toxicityDistribution = this.generateToxicityDistribution();
+      distributionsNeedRegen = true; // Regenerate if toxicity level changes
     }
     if (params.antibiotics !== undefined) this.antibiotics = params.antibiotics;
     if (params.carryingCapacity !== undefined) this.carryingCapacity = params.carryingCapacity;
-    if (params.width !== undefined) this.width = params.width;
-    if (params.height !== undefined) this.height = params.height;
+    
+    // Update width and height and regenerate distributions if they change
+    if (params.width !== undefined && params.width !== this.width) {
+      this.width = params.width;
+      distributionsNeedRegen = true;
+    }
+    if (params.height !== undefined && params.height !== this.height) {
+      this.height = params.height;
+      distributionsNeedRegen = true;
+    }
+
+    if (distributionsNeedRegen) {
+      this.initializeDistributions(); // Regenerate both if any relevant parameter changes
+    }
   }
   
   /**
@@ -324,11 +363,14 @@ class Environment {
         nutrients: this.nutrients,
         toxicity: this.toxicity,
         antibiotics: this.antibiotics,
-        carryingCapacity: this.carryingCapacity
+        carryingCapacity: this.carryingCapacity,
+        width: this.width, // Add width to currentParameters
+        height: this.height // Add height to currentParameters
       }
     };
   }
 }
 
 export default Environment;
+
 

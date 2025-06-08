@@ -4,17 +4,23 @@ import useAnimationFrame from './useAnimationFrame';
 
 /**
  * Custom hook for managing the bacteria simulation
- * @param {Object} options - Initial simulation options
+ * @param {Object} initialOptions - Initial simulation options
+ * @param {number} resetTrigger - A dependency to trigger re-initialization
  * @returns {Object} - Simulation state and controls
  */
-const useSimulation = (options = {}) => {
+const useSimulation = (initialOptions = {}, resetTrigger = 0) => {
+  // Store initial options to reset to them later
+  const initialEnvironmentParams = initialOptions.environmentParams || {};
+  const initialBacteriaParams = initialOptions.initialBacteriaParams || {};
+  const initialPopulation = initialOptions.initialPopulation || 50;
+
   // Create simulation instance
   const simulationRef = useRef(null);
   
   // State for simulation parameters
-  const [environmentParams, setEnvironmentParams] = useState(options.environmentParams || {});
-  const [bacteriaParams, setBacteriaParams] = useState(options.initialBacteriaParams || {});
-  const [initialPopulation, setInitialPopulation] = useState(options.initialPopulation || 50);
+  const [environmentParams, setEnvironmentParams] = useState(initialEnvironmentParams);
+  const [bacteriaParams, setBacteriaParams] = useState(initialBacteriaParams);
+  const [currentInitialPopulation, setCurrentInitialPopulation] = useState(initialPopulation);
   
   // State for simulation controls
   const [running, setRunning] = useState(false);
@@ -23,22 +29,29 @@ const useSimulation = (options = {}) => {
   // State for simulation data
   const [simulationState, setSimulationState] = useState(null);
   
-  // Initialize simulation
+  // Effect to (re)initialize simulation when resetTrigger changes
   useEffect(() => {
     simulationRef.current = new Simulation({
-      environmentParams,
-      initialBacteriaParams: bacteriaParams,
-      initialPopulation
+      environmentParams: initialEnvironmentParams,
+      initialBacteriaParams: initialBacteriaParams,
+      initialPopulation: initialPopulation
     });
     
     // Update state with initial simulation state
     setSimulationState(simulationRef.current.getState());
     
+    // Reset internal states to initial values when simulation is re-initialized
+    setEnvironmentParams(initialEnvironmentParams);
+    setBacteriaParams(initialBacteriaParams);
+    setCurrentInitialPopulation(initialPopulation);
+    setRunning(false);
+    setSpeed(1);
+
     // Clean up
     return () => {
       simulationRef.current = null;
     };
-  }, []);
+  }, [resetTrigger]); // Depend only on resetTrigger
   
   // Update simulation running state
   useEffect(() => {
@@ -90,12 +103,11 @@ const useSimulation = (options = {}) => {
     setRunning(prev => !prev);
   };
   
-  // Function to reset the simulation
+  // Function to reset the simulation (this will be handled by App.jsx)
   const reset = () => {
-    if (simulationRef.current) {
-      simulationRef.current.reset();
-      setSimulationState(simulationRef.current.getState());
-    }
+    // This function is now primarily a placeholder. The actual reset logic
+    // is triggered by changing the `simulationKey` in `App.jsx`.
+    // We still keep it here for consistency in the returned object.
   };
   
   // Function to update environment parameters
@@ -126,7 +138,7 @@ const useSimulation = (options = {}) => {
   
   // Function to update initial population
   const updateInitialPopulation = (population) => {
-    setInitialPopulation(population);
+    setCurrentInitialPopulation(population);
     
     if (simulationRef.current) {
       simulationRef.current.setInitialPopulation(population);
@@ -147,7 +159,7 @@ const useSimulation = (options = {}) => {
     // Simulation parameters
     environmentParams,
     bacteriaParams,
-    initialPopulation,
+    initialPopulation: currentInitialPopulation,
     
     // Simulation controls
     running,
@@ -169,4 +181,5 @@ const useSimulation = (options = {}) => {
 };
 
 export default useSimulation;
+
 

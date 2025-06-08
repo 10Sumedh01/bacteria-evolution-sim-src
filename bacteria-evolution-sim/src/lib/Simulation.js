@@ -19,6 +19,7 @@ class Simulation {
       initialPopulation = 50
     } = options;
     
+    console.log("Simulation constructor called with environmentParams:", environmentParams);
     this.environment = new Environment(environmentParams);
     this.bacteria = [];
     this.initialBacteriaParams = initialBacteriaParams;
@@ -29,6 +30,7 @@ class Simulation {
     
     // Initialize bacteria population
     this.initializePopulation();
+    console.log("Simulation initialized. Initial population:", this.bacteria.length);
   }
   
   /**
@@ -51,6 +53,7 @@ class Simulation {
       
       this.bacteria.push(bacterium);
     }
+    console.log("Population initialized with", this.bacteria.length, "bacteria.");
   }
   
   /**
@@ -58,6 +61,7 @@ class Simulation {
    */
   start() {
     this.running = true;
+    console.log("Simulation started.");
   }
   
   /**
@@ -65,24 +69,25 @@ class Simulation {
    */
   pause() {
     this.running = false;
+    console.log("Simulation paused.");
   }
   
   /**
    * Reset the simulation
    */
   reset() {
+    console.log("Resetting simulation...");
+    // Preserve current width and height when resetting environment
+    const currentEnvParams = this.environment.getStatistics().currentParameters;
+    console.log("Current environment parameters before reset:", currentEnvParams);
     this.environment = new Environment({
-      width: this.environment.width,
-      height: this.environment.height,
-      temperature: this.environment.temperature,
-      pH: this.environment.pH,
-      nutrients: this.environment.nutrients,
-      toxicity: this.environment.toxicity,
-      antibiotics: this.environment.antibiotics,
-      carryingCapacity: this.environment.carryingCapacity
+      ...currentEnvParams,
+      width: currentEnvParams.width,
+      height: currentEnvParams.height
     });
     
     this.initializePopulation();
+    console.log("Simulation reset complete.");
   }
   
   /**
@@ -91,6 +96,7 @@ class Simulation {
    */
   setSpeed(speed) {
     this.speed = speed;
+    console.log("Simulation speed set to:", speed);
   }
   
   /**
@@ -136,7 +142,7 @@ class Simulation {
     
     // If population is extinct, optionally restart
     if (this.bacteria.length === 0) {
-      console.log('Population extinct at generation', this.environment.generation);
+      console.log("Population extinct at generation", this.environment.generation);
     }
     
     return this.getState();
@@ -161,6 +167,7 @@ class Simulation {
    * @param {Object} params - New parameters
    */
   setEnvironmentParameters(params) {
+    console.log("Setting environment parameters:", params);
     this.environment.setParameters(params);
   }
   
@@ -173,6 +180,7 @@ class Simulation {
       ...this.initialBacteriaParams,
       ...params
     };
+    console.log("Setting initial bacteria parameters:", this.initialBacteriaParams);
   }
   
   /**
@@ -181,6 +189,7 @@ class Simulation {
    */
   setInitialPopulation(size) {
     this.initialPopulation = size;
+    console.log("Setting initial population size:", size);
   }
   
   /**
@@ -200,4 +209,5 @@ class Simulation {
 }
 
 export default Simulation;
+
 
